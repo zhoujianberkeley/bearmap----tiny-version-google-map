@@ -16,6 +16,7 @@ public class Rasterer {
     double latitudeUpBound = MapServer.ROOT_ULLAT;
     double latitudeLowBound = MapServer.ROOT_LRLAT;
     double longitudeSpan = MapServer.ROOT_LRLON - MapServer.ROOT_ULLON;
+    double latitudeSpan = MapServer.ROOT_ULLAT - MapServer.ROOT_LRLAT;
 
     /**
      * Takes a user query and finds the grid of images that best matches the query. These images
@@ -45,7 +46,6 @@ public class Rasterer {
 
         // things to put in RasterResultParams
         double rasterUlLon, rasterUlLat, rasterLrLon, rasterLrLat;
-        String[][] renderGrid;
         boolean querySuccess;
 
         // calculate longitude distance per pixel of the request for comparision
@@ -53,31 +53,57 @@ public class Rasterer {
 
         // calculate the required depth of png files
         int depth = getDepth(requestLonDPP);
+        int numOfBlocks = (int) Math.pow(2, depth);
 
         // the longitude-span of each block in the calculated depth
         double longitudePerBlock = longitudeSpan / (Math.pow(2, depth));
+        double latitudePerBlock = latitudeSpan / ((Math.pow(2, depth)));
+
+        // calculate the distance between the left bound and the output region
+        int leftCount = leftBound(longitudePerBlock, upperLeftLongitude);
+        int rightCount = rightBound(longitudePerBlock, lowerRightLongitude);
+        int upCount = upBound(latitudePerBlock, upperLeftLatitude);
+        int lowCount = lowBound(latitudePerBlock, lowerRightLatitude);
+
+        // Create a render grid to put into RasterResultParams
+        String[][] renderGrid =
+                new String[numOfBlocks - upCount - lowCount][numOfBlocks - leftCount - rightCount];
+        // Fill the renderGrid
+        for (int i = upCount; i < numOfBlocks - lowCount; i++) {
+            for (int j = leftCount; j < numOfBlocks - rightCount; j++) {
+                renderGrid[i - upCount][j - leftCount] = toFile(depth, j, i);
+            }
+        }
 
         // calculate bounds for the return region
-        /*
-        rasterUlLon = leftBound(longitudePerBlock, upperLeftLongitude);
-        rasterLrLon = rightBound(longitudePerBlock, lowerRightLongitude);
-        rasterUlLat = upBound(longitudePerBlock, upperLeftLatitude);
-        rasterLrLat = lowBound(longitudePerBlock, lowerRightLatitude);
-        */
+        rasterUlLon = longitudeLeftBound + leftCount * longitudePerBlock;
+        rasterLrLon = longitudeRightBound - rightCount * longitudePerBlock;
+        rasterUlLat = latitudeUpBound - upCount * latitudePerBlock;
+        rasterLrLat = latitudeLowBound + lowCount * latitudePerBlock;
+
+        RasterResultParams.Builder newBuilder = new RasterResultParams.Builder();
+        newBuilder.setRenderGrid(renderGrid);
+        newBuilder.setRasterLrLat(rasterLrLat);
+        newBuilder.setRasterLrLon(rasterLrLon);
+        newBuilder.setRasterUlLat(rasterUlLat);
+        newBuilder.setRasterUlLon(rasterUlLon);
+        newBuilder.setDepth(depth);
+        newBuilder.setQuerySuccess(true);
+
+        RasterResultParams toReturn = newBuilder.create();
 
         /*
         * To get the array of array of png files, first calculate the 4 bounds of the region
         * to return, and then put corresponding file names into the array of array.
         * */
 
-        System.out.println(
-                "Since you haven't implemented getMapRaster, nothing is displayed in the browser.");
 
-        /* TODO: Make sure you can explain every part of the task before you begin.
+        /* Make sure you can explain every part of the task before you begin.
          * Hint: Define additional classes to make it easier to pass around multiple values, and
          * define additional methods to make it easier to test and reason about code. */
 
-        return RasterResultParams.queryFailed();
+        return toReturn;
+        //return RasterResultParams.queryFailed();
     }
 
     /**
@@ -106,7 +132,7 @@ public class Rasterer {
         return depth;
     }
 
-    private int leftBound(double span, double leftRequest){
+    private int leftBound(double span, double leftRequest) {
         double start = longitudeLeftBound;
         int count = 0;
         while (count * span + start < leftRequest) {
@@ -115,7 +141,7 @@ public class Rasterer {
         return count - 1;
     }
 
-    private double rightBound(double span, double rightRequest) {
+    private int rightBound(double span, double rightRequest) {
         double start = longitudeRightBound;
         int count = 0;
         while (start - count * span > rightRequest) {
@@ -124,7 +150,7 @@ public class Rasterer {
         return count - 1;
     }
 
-    private double upBound(double span, double upRequest) {
+    private int upBound(double span, double upRequest) {
         double start = latitudeUpBound;
         int count = 0;
         while (start - count * span > upRequest) {
@@ -133,12 +159,16 @@ public class Rasterer {
         return count - 1;
     }
 
-    private double lowBound(double span, double lowRequest) {
+    private int lowBound(double span, double lowRequest) {
         double start = latitudeLowBound;
         int count = 0;
         while (start + count * span < lowRequest) {
             count += 1;
         }
         return count - 1;
+    }
+
+    private String toFile(int d, int x, int y) {
+        return "d" + d + "_x" + x + "_y" + y + ".png";
     }
 }

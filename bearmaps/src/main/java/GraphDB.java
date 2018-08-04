@@ -9,6 +9,10 @@ import javax.xml.parsers.SAXParserFactory;
 import java.util.Collections;
 import java.util.List;
 
+import java.util.HashSet;
+import java.util.HashMap;
+
+
 /**
  * Graph for storing all of the intersection (vertex) and road (edge) information.
  * Uses your GraphBuildingHandler to convert the XML files into a graph. Your
@@ -19,12 +23,15 @@ import java.util.List;
  * @author Kevin Lowe, Antares Chen, Kevin Lin
  */
 public class GraphDB {
+    // a hashMap to store the vertices
+    HashMap<Long, Node> vertexMap;
     /**
      * This constructor creates and starts an XML parser, cleans the nodes, and prepares the
      * data structures for processing. Modify this constructor to initialize your data structures.
      * @param dbPath Path to the XML file to be parsed.
      */
     public GraphDB(String dbPath) {
+        vertexMap = new HashMap<>();
         File inputFile = new File(dbPath);
         try (FileInputStream inputStream = new FileInputStream(inputFile)) {
             SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -51,7 +58,7 @@ public class GraphDB {
      * we can reasonably assume this since typically roads are connected.
      */
     private void clean() {
-        // TODO
+        HashSet<Long> removeItemIDs = new HashSet<>();
     }
 
     /**
@@ -60,8 +67,7 @@ public class GraphDB {
      * @return The longitude of that vertex, or 0.0 if the vertex is not in the graph.
      */
     double lon(long v) {
-        // TODO
-        return 0;
+        return vertexMap.get(v).nodeLon;
     }
 
     /**
@@ -70,8 +76,11 @@ public class GraphDB {
      * @return The latitude of that vertex, or 0.0 if the vertex is not in the graph.
      */
     double lat(long v) {
-        // TODO
-        return 0;
+        return vertexMap.get(v).nodeLat;
+    }
+
+    void addNode(long id, Node n) {
+        vertexMap.put(id, n);
     }
 
     /**
@@ -79,8 +88,7 @@ public class GraphDB {
      * @return An iterable of all vertex IDs in the graph.
      */
     Iterable<Long> vertices() {
-        // TODO
-        return Collections.emptySet();
+        return vertexMap.keySet();
     }
 
     /**
@@ -90,8 +98,7 @@ public class GraphDB {
      * iterable if the vertex is not in the graph.
      */
     Iterable<Long> adjacent(long v) {
-        // TODO
-        return Collections.emptySet();
+        return vertexMap.get(v).adjacent;
     }
 
     /**
@@ -114,6 +121,18 @@ public class GraphDB {
         return R * c;
     }
 
+    public double distance(double tempLon, double tempLat, long vertexID) {
+        double phi1 = Math.toRadians(tempLat);
+        double phi2 = Math.toRadians(lat(vertexID));
+        double dphi = Math.toRadians(lat(vertexID) - tempLat);
+        double dlambda = Math.toRadians(lon(vertexID) - tempLon);
+
+        double a = Math.sin(dphi / 2.0) * Math.sin(dphi / 2.0);
+        a += Math.cos(phi1) * Math.cos(phi2) * Math.sin(dlambda / 2.0) * Math.sin(dlambda / 2.0);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
     /**
      * Returns the ID of the vertex closest to the given longitude and latitude.
      * @param lon The given longitude.
@@ -121,8 +140,16 @@ public class GraphDB {
      * @return The ID for the vertex closest to the <code>lon</code> and <code>lat</code>.
      */
     public long closest(double lon, double lat) {
-        // TODO
-        return 0;
+        double smallestDis = Double.MAX_VALUE;
+        long returnID = 0;
+        for (Node n: vertexMap.values()) {
+            double dis = distance(lon, lat, n.nodeID);
+            if (dis < smallestDis) {
+                smallestDis = dis;
+                returnID = n.nodeID;
+            }
+        }
+        return returnID;
     }
 
     /**

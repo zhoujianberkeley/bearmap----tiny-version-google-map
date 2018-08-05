@@ -1,0 +1,2 @@
+We started the project too late because Jian is too busy and there were some unexpected bugs in debugging.
+Next time when doing a project, I will properly estimate the debugging time.

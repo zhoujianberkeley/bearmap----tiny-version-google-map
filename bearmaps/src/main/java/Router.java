@@ -1,4 +1,9 @@
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.PriorityQueue;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -93,9 +98,9 @@ public class Router {
         NavigationDirection n = new NavigationDirection();
         n.way = g.vertexMap.get(route.get(0)).nodeName;
         List<NavigationDirection> directions = new ArrayList<>();
-        for(int i = 1; i < route.size(); i += 1) {
+        for (int i = 1; i < route.size(); i += 1) {
             long tempId = route.get(i);
-            if(g.vertexMap.get(tempId).nodeName.equals(n.way)) {
+            if (g.vertexMap.get(tempId).nodeName.equals(n.way)) {
                 n.distance += g.distance(tempId, route.get(i - 1));
             } else {
                 directions.add(n);

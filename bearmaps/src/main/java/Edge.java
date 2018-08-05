@@ -4,6 +4,7 @@ public class Edge {
     long edgeID;
     boolean valid;
     String maxSpeed;
+    double distance;
     // the node IDs in the edge
     ArrayList<Long> nodeIds;
 

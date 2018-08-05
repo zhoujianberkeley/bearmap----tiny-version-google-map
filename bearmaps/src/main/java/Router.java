@@ -1,6 +1,4 @@
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,8 +20,66 @@ public class Router {
     public static List<Long> shortestPath(GraphDB g,
                                           double stlon, double stlat,
                                           double destlon, double destlat) {
-        // TODO
-        return Collections.emptyList();
+        // the list to contain the vertices in the route
+        ArrayList<Long> recordVertices = new ArrayList<>();
+        // The priority queue to use
+        PriorityQueue<Node> fringe = new PriorityQueue<>();
+        // the mashMap to record the distances from starting point to this vertex
+        HashMap<Long, Double> best = new HashMap<>();
+        // the hashMap to record parent Nodes of vertices
+        HashMap<Long, Node> parentNode = new HashMap<>();
+        // a hashSet to mark the visited Nodes
+        HashSet<Long> marked = new HashSet<>();
+
+        // Get the starting Node and the end Node
+        Node startingNode = g.vertexMap.get(g.closest(stlon, stlat));
+        Node endingNode = g.vertexMap.get(g.closest(destlon, destlat));
+
+        // add the starting Node to the fringe
+        Node sourceNode = new Node(startingNode.nodeID, null,
+                heuristic(g, startingNode.nodeID, endingNode.nodeID));
+        parentNode.put(startingNode.nodeID, null);
+        best.put(startingNode.nodeID, 0.0);
+        fringe.add(sourceNode);
+
+        while (!fringe.isEmpty()) {
+            // dequeue the vertex with the closest distance
+            Node pop = fringe.poll();
+            // if this vertex is the destination, exit
+            if (pop.nodeID == endingNode.nodeID) {
+                break;
+            }
+            if (marked.contains(pop.nodeID)) {
+                continue;
+            }
+            marked.add(pop.nodeID);
+            Node tempNode = g.vertexMap.get(pop.nodeID);
+            //System.out.println(tempNode);
+            //System.out.println(tempNode.adjacent.size());
+            for (long adjNodeId: tempNode.adjacent) {
+                // relax the edges
+                double dis = best.get(tempNode.nodeID) + g.distance(tempNode.nodeID, adjNodeId);
+                if (!best.containsKey(adjNodeId) || dis < best.get(adjNodeId)) {
+                    // Change the best distance of this Node
+                    best.put(adjNodeId, dis);
+                    // Change the parent Node of this Node
+                    parentNode.put(adjNodeId, pop);
+                    // add the this Node to the fringe
+                    Node toAdd = new Node(adjNodeId,
+                            pop, dis + heuristic(g, adjNodeId, endingNode.nodeID));
+                    fringe.add(toAdd);
+                }
+            }
+        }
+        while (endingNode != null) {
+            recordVertices.add(0, endingNode.nodeID);
+            endingNode = parentNode.get(endingNode.nodeID);
+        }
+        return recordVertices;
+    }
+
+    private static double heuristic(GraphDB g, long n, long goal) {
+        return g.distance(n, goal);
     }
 
     /**
@@ -34,8 +90,63 @@ public class Router {
      * @return A new <code>List</code> of <code>NavigationDirection</code> objects.
      */
     public static List<NavigationDirection> routeDirections(GraphDB g, List<Long> route) {
-        // TODO
-        return Collections.emptyList();
+        NavigationDirection n = new NavigationDirection();
+        n.way = g.vertexMap.get(route.get(0)).nodeName;
+        List<NavigationDirection> directions = new ArrayList<>();
+        for(int i = 1; i < route.size(); i += 1) {
+            long tempId = route.get(i);
+            if(g.vertexMap.get(tempId).nodeName.equals(n.way)) {
+                n.distance += g.distance(tempId, route.get(i - 1));
+            } else {
+                directions.add(n);
+                n = new NavigationDirection();
+                n.way = g.vertexMap.get(tempId).nodeName;
+            }
+        }
+        System.out.println(directions);
+        return directions;
+    }
+
+    private static String bearingToAction(double bearingInDegress) {
+        if (bearingInDegress < -100.0) {
+            return NavigationDirection.DIRECTIONS[NavigationDirection.SHARP_LEFT];
+        } else if (bearingInDegress < -30.0) {
+            return NavigationDirection.DIRECTIONS[NavigationDirection.LEFT];
+        } else if (bearingInDegress < -15.0) {
+            return NavigationDirection.DIRECTIONS[NavigationDirection.SLIGHT_LEFT];
+        } else if (bearingInDegress <= 15.0) {
+            return NavigationDirection.DIRECTIONS[NavigationDirection.STRAIGHT];
+        } else if (bearingInDegress < 30.0) {
+            return NavigationDirection.DIRECTIONS[NavigationDirection.SLIGHT_RIGHT];
+        } else if (bearingInDegress < 100.0) {
+            return NavigationDirection.DIRECTIONS[NavigationDirection.RIGHT];
+        } else {
+            return NavigationDirection.DIRECTIONS[NavigationDirection.SHARP_RIGHT];
+        }
+    }
+
+    private static NavigationDirection create(String action, String way, double miles) {
+        String direction = String.format("%s on %s and continue for %f miles.", action, way, miles);
+        return Objects.requireNonNull(NavigationDirection.fromString(direction));
+    }
+
+    static int directionPointer(Double bearing) {
+        if (-15.0 < bearing && bearing < 15.0) {
+            return 1;
+        } else if (-30.0 < bearing && bearing <= -15.0) {
+            return 2;
+        } else if (15.0 <= bearing && bearing < 30.0) {
+            return 3;
+        } else if (30.0 <= bearing && bearing < 100.0) {
+            return 4;
+        } else if (-100.0 < bearing && bearing <= -30.0) {
+            return 5;
+        } else if (bearing <= -100) {
+            return 6;
+        } else if (100.0 <= bearing) {
+            return 7;
+        }
+        return 0;
     }
 
     /**
@@ -54,6 +165,8 @@ public class Router {
         /** A mapping of integer values to directions.*/
         public static final String[] DIRECTIONS = new String[NUM_DIRECTIONS];
 
+        public static final String UNKNOWN_ROAD = "unknown road";
+
         static {
             DIRECTIONS[START] = "Start";
             DIRECTIONS[STRAIGHT] = "Go straight";
@@ -70,7 +183,13 @@ public class Router {
         /** The name of this way. */
         String way;
         /** The distance along this way. */
-        double distance = 0.0;
+        double distance;
+
+        public NavigationDirection() {
+            this.direction = STRAIGHT;
+            this.way = UNKNOWN_ROAD;
+            this.distance = 0.0;
+        }
 
         public String toString() {
             return String.format("%s on %s and continue for %.3f miles.",

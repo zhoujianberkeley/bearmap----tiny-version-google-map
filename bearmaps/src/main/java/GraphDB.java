@@ -59,6 +59,12 @@ public class GraphDB {
      */
     private void clean() {
         HashSet<Long> removeItemIDs = new HashSet<>();
+        for (Node n: vertexMap.values()) {
+            if (n.adjacent.size() == 0) {
+                removeItemIDs.add(n.nodeID);
+            }
+        }
+        vertexMap.keySet().removeAll(removeItemIDs);
     }
 
     /**

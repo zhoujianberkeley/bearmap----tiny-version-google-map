@@ -69,9 +69,6 @@ public class GraphBuildingHandler extends DefaultHandler {
         if (qName.equals("node")) {
             /* Encountering a new <node...> tag. */
             activeState = "node";
-            // System.out.println("Node id: " + attributes.getValue("id"));
-            // System.out.println("Node lon: " + attributes.getValue("lon"));
-            // System.out.println("Node lat: " + attributes.getValue("lat"));
 
             long id = Long.parseLong(attributes.getValue("id"));
             double lat = Double.parseDouble(attributes.getValue("lat"));
@@ -85,7 +82,7 @@ public class GraphBuildingHandler extends DefaultHandler {
         } else if (qName.equals("way")) {
             /* Encountering a new <way...> tag. */
             activeState = "way";
-            // System.out.println("Beginning a way...");
+            //System.out.println("Beginning a way...");
             long id = Long.parseLong(attributes.getValue("id"));
             tempEdge = new Edge(id);
         } else if (activeState.equals("way") && qName.equals("nd")) {
@@ -128,13 +125,16 @@ public class GraphBuildingHandler extends DefaultHandler {
                 .equals("name")) {
             /* While looking at a node, found a <tag...> with k="name". */
             String name = attributes.getValue("v");
-            tempNode.setName(name);
+            g.vertexMap.get(tempNode.nodeID).setName(attributes.getValue("v"));
             /* Create a location.
              * Hint: Since we found this <tag...> INSIDE a node, we should probably remember which
              * node this tag belongs to. Remember XML is parsed top-to-bottom, so probably it's the
              * last node that you looked at (check the first if-case). */
 
-            // System.out.println("Node's name: " + attributes.getValue("v"));
+            //System.out.println("Node's name: " + attributes.getValue("v"));
+        }
+        for (Node i: g.vertexMap.values()) {
+            System.out.println(i.nodeName);
         }
     }
 

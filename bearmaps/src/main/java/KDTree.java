@@ -17,17 +17,17 @@ public class KDTree {
         double yAxis;
         long id;
 
-        public KDNode(double x, double y, long givenID) {
+        KDNode(double x, double y, long givenID) {
             xAxis = x;
             yAxis = y;
             id = givenID;
         }
 
-        public double getXAxis(){
+        public double getXAxis() {
             return xAxis;
         }
 
-        public double getYAxis(){
+        public double getYAxis() {
             return yAxis;
         }
     }
@@ -118,7 +118,8 @@ public class KDTree {
         return nearestHelper(xCor, yCor, temp, champion, 1).bestID;
     }
 
-    public Champion nearestHelper(double targetX, double targetY, KDNode node, Champion champion, int level) {
+    public Champion nearestHelper(double targetX, double targetY,
+                                  KDNode node, Champion champion, int level) {
         if (node == null) {
             return champion;
         }
@@ -130,16 +131,17 @@ public class KDTree {
         }
 
         boolean goLeftOrBottom = false;
-        if(level % 2 == 0){
-            if(targetY < node.yAxis){
+        if (level % 2 == 0) {
+            if (targetY < node.yAxis) {
                 goLeftOrBottom = true;
             }
         } else {
-            if(targetX < node.xAxis){
+            if (targetX < node.xAxis) {
                 goLeftOrBottom = true;
             }
         }
-        if(goLeftOrBottom) {
+        if (goLeftOrBottom) {
+            nearestHelper(targetX, targetY, node.left, champion, newLevel);
             double orientationX;
             double orientationY;
             if (level % 2 == 0) {
@@ -153,10 +155,10 @@ public class KDTree {
             if (orientationDis < champion.bestDistant) {
                 nearestHelper(targetX, targetY, node.right, champion, newLevel);
             }
-            nearestHelper(targetX, targetY, node.left, champion, newLevel);
 
             //nearestHelper(targetX, targetY, node.right, newLevel);
         } else {
+            nearestHelper(targetX, targetY, node.right, champion, newLevel);
             double orientationX;
             double orientationY;
             if (level % 2 == 0) {
@@ -170,25 +172,22 @@ public class KDTree {
             if (orientationDis < champion.bestDistant) {
                 nearestHelper(targetX, targetY, node.left, champion, newLevel);
             }
-            nearestHelper(targetX, targetY, node.right, champion, newLevel);
             //nearestHelper(targetX, targetY, node.left, newLevel);
         }
-        nearestHelper(targetX, targetY, node.left, champion, newLevel);
-        nearestHelper(targetX, targetY, node.right, champion, newLevel);
         return champion;
     }
 
-    public class Champion{
+    public class Champion {
         double bestDistant;
         long bestID;
 
-        public Champion(double dis, long id){
+        public Champion(double dis, long id) {
             bestDistant = dis;
             bestID = id;
         }
     }
 
-    public static double euclidean(double x1, double x2, double y1, double y2) {
+    public static double euclidean(double x1, double y1, double x2, double y2) {
         return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
     }
 }

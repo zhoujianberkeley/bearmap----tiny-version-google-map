@@ -6,7 +6,11 @@ import java.io.IOException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 
 
 /**
@@ -34,12 +38,12 @@ public class GraphDB {
             SAXParserFactory factory = SAXParserFactory.newInstance();
             SAXParser saxParser = factory.newSAXParser();
             saxParser.parse(inputStream, new GraphBuildingHandler(this));
+            clean();
             ArrayList<Node> givenList = new ArrayList<Node>(vertexMap.values());
             KDTree2D.constructTree(givenList);
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
-        clean();
     }
 
     /**
@@ -145,6 +149,7 @@ public class GraphDB {
      * @return The ID for the vertex closest to the <code>lon</code> and <code>lat</code>.
      */
     public long closest(double lon, double lat) {
+        /*
         double smallestDis = Double.MAX_VALUE;
         long returnID = 0;
         for (Node n: vertexMap.values()) {
@@ -155,12 +160,11 @@ public class GraphDB {
             }
         }
         return returnID;
-        /*
+        */
         double x = projectToX(lon, lat);
         double y = projectToY(lon, lat);
         long returnID = KDTree2D.nearest(x, y);
         return returnID;
-        */
     }
 
     /**

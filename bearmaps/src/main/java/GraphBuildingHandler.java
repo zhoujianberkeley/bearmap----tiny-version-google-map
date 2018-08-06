@@ -133,9 +133,6 @@ public class GraphBuildingHandler extends DefaultHandler {
 
             //System.out.println("Node's name: " + attributes.getValue("v"));
         }
-        for (Node i: g.vertexMap.values()) {
-            System.out.println(i.nodeName);
-        }
     }
 
     /**

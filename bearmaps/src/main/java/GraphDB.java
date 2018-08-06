@@ -6,11 +6,7 @@ import java.io.IOException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.util.Collections;
-import java.util.List;
-
-import java.util.HashSet;
-import java.util.HashMap;
+import java.util.*;
 
 
 /**
@@ -25,6 +21,7 @@ import java.util.HashMap;
 public class GraphDB {
     // a hashMap to store the vertices
     HashMap<Long, Node> vertexMap;
+    KDTree KDTree2D = new KDTree();
     /**
      * This constructor creates and starts an XML parser, cleans the nodes, and prepares the
      * data structures for processing. Modify this constructor to initialize your data structures.
@@ -37,6 +34,8 @@ public class GraphDB {
             SAXParserFactory factory = SAXParserFactory.newInstance();
             SAXParser saxParser = factory.newSAXParser();
             saxParser.parse(inputStream, new GraphBuildingHandler(this));
+            ArrayList<Node> givenList = new ArrayList<Node>(vertexMap.values());
+            KDTree2D.constructTree(givenList);
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
@@ -156,6 +155,12 @@ public class GraphDB {
             }
         }
         return returnID;
+        /*
+        double x = projectToX(lon, lat);
+        double y = projectToY(lon, lat);
+        long returnID = KDTree2D.nearest(x, y);
+        return returnID;
+        */
     }
 
     /**

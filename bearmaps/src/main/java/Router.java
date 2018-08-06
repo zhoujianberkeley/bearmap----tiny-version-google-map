@@ -62,17 +62,19 @@ public class Router {
             //System.out.println(tempNode);
             //System.out.println(tempNode.adjacent.size());
             for (long adjNodeId: tempNode.adjacent) {
-                // relax the edges
-                double dis = best.get(tempNode.nodeID) + g.distance(tempNode.nodeID, adjNodeId);
-                if (!best.containsKey(adjNodeId) || dis < best.get(adjNodeId)) {
-                    // Change the best distance of this Node
-                    best.put(adjNodeId, dis);
-                    // Change the parent Node of this Node
-                    parentNode.put(adjNodeId, pop);
-                    // add the this Node to the fringe
-                    Node toAdd = new Node(adjNodeId,
-                            pop, dis + heuristic(g, adjNodeId, endingNode.nodeID));
-                    fringe.add(toAdd);
+                if (!marked.contains(adjNodeId)) {
+                    // relax the edges
+                    double dis = best.get(tempNode.nodeID) + g.distance(tempNode.nodeID, adjNodeId);
+                    if (!best.containsKey(adjNodeId) || dis < best.get(adjNodeId)) {
+                        // Change the best distance of this Node
+                        best.put(adjNodeId, dis);
+                        // Change the parent Node of this Node
+                        parentNode.put(adjNodeId, pop);
+                        // add the this Node to the fringe
+                        Node toAdd = new Node(adjNodeId,
+                                pop, dis + heuristic(g, adjNodeId, endingNode.nodeID));
+                        fringe.add(toAdd);
+                    }
                 }
             }
         }
